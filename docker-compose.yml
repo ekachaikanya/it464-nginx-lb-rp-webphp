@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+
+  # ── NGINX Load Balancer (port 80) ────────────────────────────────
+  nginx-lb:
+    image: nginx:alpine
+    container_name: nginx-lb
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-lb/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app1
+      - app2
+      - app3
+    networks:
+      - webnet
+    restart: unless-stopped
+
+  # ── NGINX Reverse Proxy (port 8080) ──────────────────────────────
+  nginx-rp:
+    image: nginx:alpine
+    container_name: nginx-rp
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx-rp/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app1
+    networks:
+      - webnet
+    restart: unless-stopped
+
+  # ── PHP App Servers (x3) — internal only, no host port ───────────
+  app1:
+    build: ./app
+    container_name: app-server-1
+    environment:
+      - SERVER_NAME=Web Server 1
+      - SERVER_COLOR=#22d3a5
+      - SERVER_EMOJI=🟢
+    networks:
+      - webnet
+    restart: unless-stopped
+
+  app2:
+    build: ./app
+    container_name: app-server-2
+    environment:
+      - SERVER_NAME=Web Server 2
+      - SERVER_COLOR=#00d4ff
+      - SERVER_EMOJI=🔵
+    networks:
+      - webnet
+    restart: unless-stopped
+
+  app3:
+    build: ./app
+    container_name: app-server-3
+    environment:
+      - SERVER_NAME=Web Server 3
+      - SERVER_COLOR=#ffd700
+      - SERVER_EMOJI=🟡
+    networks:
+      - webnet
+    restart: unless-stopped
+
+networks:
+  webnet:
+    driver: bridge
